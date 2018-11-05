@@ -6,7 +6,6 @@
     - osp_project: operators
     - osp_user: operator
     - osp_pass: redhat
-    - local_repo_url: http://192.168.0.7/repos
   tasks:
     - name: Create a unique ID
       shell: echo "`date +"%Y%m%d%H%M%S"`-$(cat /dev/urandom | tr -cd [:alpha:] | tr '[:upper:]' '[:lower:]' | head -c 4)"
@@ -48,6 +47,10 @@
         ansible_ssh_user: cloud-user
         groupname: rhel-stig
 
+- hosts: rhel-stig
+  vars:
+    - local_repo_url: http://192.168.0.7/repos
+  tasks:
     - name: enable the needed rhel repositories
       yum_repository:
         name: "{{ item }}"
