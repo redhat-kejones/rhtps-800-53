@@ -85,6 +85,7 @@
       systemd:
         name: httpd
         enabled: yes
+        state: started
         masked: no
 
     - name: create the scap directory in the web server content
