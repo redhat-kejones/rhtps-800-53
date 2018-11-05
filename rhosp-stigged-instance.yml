@@ -3,14 +3,18 @@
   gather_facts: no
   vars:
     - osp_url: http://openstack.hattrick.lab:5000/v2.0
+    - osp_project: operators
+    - osp_user: operator
+    - osp_pass: redhat
+    - local_repo_url: http://192.168.0.7/repos
   tasks:
     - name: Launch a RHEL instance to STIG
       os_server:
         auth:
           auth_url: "{{ osp_url }}"
-          username: operator
-          password: redhat
-          project_name: operators
+          username: "{{ osp_user }}"
+          password: "{{ osp_pass }}"
+          project_name: "{{ osp_project }}"
         name: rhel-stig
         state: present
         key_name: operator
@@ -39,6 +43,19 @@
         hostname: "{{ osp_host.openstack.public_v4 }}"
         ansible_ssh_user: cloud-user
         groupname: rhel-stig
+
+    - name: enable the needed rhel repositories
+      yum_repository:
+        name: "{{ item }}"
+        description: "{{ item }}"
+        baseurl: "{{ local_repo_url }}{{ item }}"
+        gpgcheck: no
+        enabled: yes
+        file: rhn-local
+        state: present
+      with_items:
+        - rhel-7-server-rpms
+        - rhel-7-server-extras-rpms
 
 - hosts: rhel-stig
   become: yes
