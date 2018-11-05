@@ -47,7 +47,6 @@
     scap_profile: stig-rhel7-disa
   roles:
     - rhtps.800-53
-
   tasks:
     - name: determine the most recent scap report
       command: ls -tr /tmp/scap_reports/
