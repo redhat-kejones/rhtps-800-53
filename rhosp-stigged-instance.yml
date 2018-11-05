@@ -1,0 +1,69 @@
+---
+- hosts: all
+  gather_facts: no
+  vars:
+    - osp_url: http://openstack.hattrick.lab:5000/v2.0
+  tasks:
+    - name: Launch a RHEL instance to STIG
+      os_server:
+        auth:
+          auth_url: "{{ osp_url }}"
+          username: operator
+          password: redhat
+          project_name: operators
+        name: rhel-stig
+        state: present
+        key_name: operator
+        availability_zone: nova
+        nics:
+          - net-name: private
+        image: rhel75
+        flavor: m1.small
+        security_groups: default
+        auto_ip: yes
+      register: osp_host
+
+    - name: wait for instance become ready to use
+      wait_for:
+       host: "{{ osp_host.openstack.public_v4 }}"
+       port: "22"
+       timeout: "320"
+       state: "started"
+
+    - name: Pause playbook execution for 30 seconds
+      pause:
+        seconds: 30
+
+    - name: add new instance to inventory
+      add_host:
+        hostname: "{{ osp_host.openstack.public_v4 }}"
+        ansible_ssh_user: cloud-user
+        groupname: rhel-stig
+
+- hosts: rhel-stig
+  become: yes
+  vars:
+    scap_reports_dir: /tmp
+    scap_profile: stig-rhel7-disa
+  roles:
+    - rhtps.800-53
+
+  tasks:
+    - name: determine the most recent scap report
+      command: ls -tr /tmp/scap_reports/
+      register: results
+
+    - name: create the scap directory in the web server content
+      file:
+        name: /var/www/html/scap
+        state: directory
+        mode: 0755
+
+    - name: copy SCAP reports to the web server content directory
+      copy:
+        remote_src: True
+        src: "/tmp/scap_reports/{{ item }}"
+        dest: /var/www/html/scap
+        mode: 0644
+      with_items: "{{ results.stdout_lines }}"
+      when: item | match("scan-xccdf-report-*")
