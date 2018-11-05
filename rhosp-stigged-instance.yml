@@ -76,6 +76,17 @@
       command: ls -tr /tmp/scap_reports/
       register: results
 
+    - name: install apache
+      yum:
+        name: httpd
+        state: latest
+
+    - name: enable service httpd and ensure it is not masked
+      systemd:
+        name: httpd
+        enabled: yes
+        masked: no
+
     - name: create the scap directory in the web server content
       file:
         name: /var/www/html/scap
