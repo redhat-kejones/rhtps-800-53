@@ -8,6 +8,10 @@
     - osp_pass: redhat
     - local_repo_url: http://192.168.0.7/repos
   tasks:
+    - name: Create a unique ID
+      shell: echo "`date +"%Y%m%d%H%M%S"`-$(cat /dev/urandom | tr -cd [:alpha:] | tr '[:upper:]' '[:lower:]' | head -c 4)"
+      register: my_unique_id
+
     - name: Launch a RHEL instance to STIG
       os_server:
         auth:
@@ -15,7 +19,7 @@
           username: "{{ osp_user }}"
           password: "{{ osp_pass }}"
           project_name: "{{ osp_project }}"
-        name: rhel-stig
+        name: rhel-stig-{{ my_unique_id.stdout }}
         state: present
         key_name: operator
         availability_zone: nova
